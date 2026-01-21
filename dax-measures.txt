@@ -1,0 +1,83 @@
+# Core DAX Measures (Portfolio)
+
+This document summarises the key DAX measures used across the dashboard. Measures are grouped by analytical purpose and are designed to support executive reporting, operational analysis, and risk monitoring.
+
+---
+
+## Work Orders
+
+- WO Total  
+  Counts all work orders in the current filter context.
+  ```DAX
+  WO Total =
+  COUNTROWS ( FactWorkOrder )
+
+- WO Completed =
+CALCULATE (
+    COUNTROWS ( FactWorkOrder ),
+    FactWorkOrder[Status] = "Completed"
+)
+
+- WO Completion Rate % =
+DIVIDE ( [WO Completed], [WO Total] )
+
+- WO Backlog (Open) =
+CALCULATE (
+    COUNTROWS ( FactWorkOrder ),
+    FactWorkOrder[Status] = "Open"
+)
+
+- WO Revisit Rate % =
+DIVIDE (
+    CALCULATE (
+        COUNTROWS ( FactWorkOrder ),
+        FactWorkOrder[IsRevisit] = TRUE()
+    ),
+    [WO Total]
+)
+
+
+## SLA
+- SLA Events Total =
+COUNTROWS ( FactSLAEvent )
+
+- SLA Breaches =
+CALCULATE (
+    COUNTROWS ( FactSLAEvent ),
+    FactSLAEvent[IsBreached] = TRUE()
+)
+
+- SLA Compliance % =
+DIVIDE (
+    [SLA Events Total] - [SLA Breaches],
+    [SLA Events Total]
+)
+
+- SLA Breach Rate % =
+DIVIDE ( [SLA Breaches], [SLA Events Total] )
+
+
+## Trends & Risk
+- SLA Breaches (Rolling 3M) =
+CALCULATE (
+    [SLA Breaches],
+    DATESINPERIOD (
+        DimDate[Date],
+        MAX ( DimDate[Date] ),
+        -3,
+        MONTH
+    )
+)
+
+- SLA Risk Status =
+IF (
+    [SLA Breaches (Rolling 3M)] > 2000,
+    "High Risk",
+    "Acceptable"
+)
+
+- WO Backlog (Trend) =
+CALCULATE (
+    COUNTROWS ( FactWorkOrder ),
+    FactWorkOrder[Status] = "Open"
+)
